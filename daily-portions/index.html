@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#f7f8fb">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="Daily Portions">
+  <meta name="description" content="A simple daily food-portion tracker.">
+  <link rel="manifest" href="./manifest.webmanifest">
+  <link rel="apple-touch-icon" href="./icon-192.png">
+  <link rel="icon" href="./icon-192.png">
+  <link rel="stylesheet" href="./styles.css">
+  <script src="./app.js" defer></script>
+  <title>Daily Portions</title>
+</head>
+<body>
+  <main class="app">
+    <header class="topbar">
+      <div>
+        <h1>Daily Portions</h1>
+        <p id="dateLabel" class="muted"></p>
+      </div>
+      <span class="header-icon" aria-hidden="true">◒</span>
+    </header>
+
+    <section class="portion-select" aria-label="Portion increment">
+      <span class="portion-title">Add portions</span>
+      <div class="segment" role="group" aria-label="Select portion increment">
+        <button type="button" class="step selected" data-step="1" aria-pressed="true">+1</button>
+        <button type="button" class="step" data-step="0.5" aria-pressed="false">+½</button>
+        <button type="button" class="step" data-step="0.25" aria-pressed="false">+¼</button>
+      </div>
+    </section>
+
+    <section id="foodGrid" class="food-grid" aria-label="Daily portion balances"></section>
+
+    <button id="toggleGoals" class="settings-toggle" type="button" aria-expanded="false">⚙ Edit daily goals</button>
+    <section id="goalsPanel" class="panel hidden" aria-label="Daily goal settings"></section>
+
+    <details class="test-tools" id="testTools">
+      <summary>Developer tests (temporary)</summary>
+      <p class="muted small">Simulate another calendar day without changing your device clock. Simulated days use separate test entries and never overwrite your real daily log.</p>
+      <div class="test-buttons">
+        <button id="testTomorrow" type="button">Simulate tomorrow</button>
+        <button id="testToday" type="button">Return to today</button>
+      </div>
+      <p id="testStatus" class="small" aria-live="polite"></p>
+    </details>
+    <p class="footnote">Saved on this device · No account required</p>
+  </main>
+</body>
+</html>
