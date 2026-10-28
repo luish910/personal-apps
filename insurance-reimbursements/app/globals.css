@@ -42,10 +42,10 @@ button:disabled { cursor: wait; opacity: .65; }
 
 .app-header {
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   justify-content: space-between;
   gap: 18px;
-  margin-bottom: 28px;
+  margin-bottom: 20px;
 }
 
 .eyebrow {
@@ -143,7 +143,7 @@ h1 {
 .action-marker { background: var(--action); }
 .waiting-marker { background: var(--waiting); }
 .section-heading h2 {
-  margin: 0 0 3px;
+  margin: 0;
   font-family: "Manrope", sans-serif;
   font-size: 17px;
   line-height: 1.25;
@@ -151,7 +151,7 @@ h1 {
 }
 .action-section .section-heading h2 { color: #804318; }
 .waiting-section .section-heading h2 { color: #205c77; }
-.section-heading p { margin: 0; color: #697787; font-size: 12px; }
+.section-heading p { display: none; }
 .count-badge {
   display: inline-flex;
   align-items: center;
@@ -206,8 +206,8 @@ h1 {
 .dot-correction { background: #b34d62; }
 .status-label { color: #354555; font-weight: 700; }
 .submitted-date { color: #73818e; font-weight: 500; }
-.claim-actions { display: flex; flex-wrap: wrap; gap: 7px; }
-.claim-actions .button { min-height: 34px; padding: 8px 10px; font-size: 11px; }
+.claim-actions { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 7px; }
+.claim-actions .button { min-width: 0; min-height: 34px; padding: 8px 7px; font-size: 11px; }
 .claim-actions .primary { background: var(--ink); }
 .empty-state {
   margin: 0;
@@ -216,6 +216,34 @@ h1 {
   font-size: 13px;
   text-align: center;
 }
+.closed-section {
+  margin: 8px 0 18px;
+  border-top: 1px solid var(--line);
+  padding-top: 14px;
+}
+.closed-section summary {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #687586;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  list-style-position: inside;
+}
+.closed-count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 23px;
+  height: 23px;
+  padding: 0 6px;
+  border-radius: 7px;
+  background: #e9edf1;
+  color: #536271;
+  font-size: 11px;
+}
+.closed-section[open] .claim-list { margin-top: 12px; }
 .page-footer {
   display: flex;
   flex-wrap: wrap;
@@ -235,9 +263,8 @@ h1 {
   .work-section { padding: 13px; border-radius: 16px; }
   .section-heading { gap: 9px; }
   .section-heading h2 { font-size: 15px; }
-  .section-heading p { font-size: 11px; }
   .claim-card { padding: 13px; }
   .claim-topline { flex-wrap: wrap; }
   .route-pill { max-width: 100%; }
-  .claim-actions .button { flex: 1 1 auto; }
+  .claim-actions .button { font-size: 10px; padding: 8px 5px; }
 }
