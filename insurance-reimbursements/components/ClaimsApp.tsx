@@ -60,7 +60,7 @@ function actionsFor(claim: Claim): ActionButton[] {
       ];
     case "needs_complementary":
       return [
-        { label: "Submitted to complementary", action: "submit_complementary", variant: "primary" },
+        { label: "Submit to comp.", action: "submit_complementary", variant: "primary" },
         { label: "Correction needed", action: "request_complementary_correction", variant: "quiet" }
       ];
     case "waiting_complementary":
@@ -104,7 +104,17 @@ export default function ClaimsApp() {
 
   useEffect(() => { void refresh(); }, [refresh]);
 
+  useEffect(() => {
+    if (!message) return;
+    const timer = window.setTimeout(() => setMessage(""), 4000);
+    return () => window.clearTimeout(timer);
+  }, [message]);
+
   const activeClaims = useMemo(() => claims.filter((claim) => claim.status !== "closed"), [claims]);
+  const closedClaims = useMemo(
+    () => claims.filter((claim) => claim.status === "closed").sort((a, b) => expenseSortValue(b).localeCompare(expenseSortValue(a))),
+    [claims]
+  );
   const needsAction = useMemo(
     () => activeClaims
       .filter((claim) => ["needs_isapre", "needs_complementary", "correction_isapre", "correction_complementary"].includes(claim.status))
@@ -203,9 +213,7 @@ export default function ClaimsApp() {
     <main className="page-shell">
       <header className="app-header">
         <div>
-          <p className="eyebrow">PERSONAL TRACKER</p>
           <h1>Reimbursements</h1>
-          <p className="subtitle">Keep each claim moving to its next step.</p>
         </div>
         <button className="button add-button" onClick={() => setShowCreate((value) => !value)}>
           {showCreate ? "Cancel" : "+ Test claim"}
@@ -243,7 +251,6 @@ export default function ClaimsApp() {
           <div className="section-marker action-marker" />
           <div>
             <h2 id="needs-heading">Needs your action</h2>
-            <p>Claims you can move forward</p>
           </div>
           <span className="count-badge action-count">{needsAction.length}</span>
         </div>
@@ -257,7 +264,6 @@ export default function ClaimsApp() {
           <div className="section-marker waiting-marker" />
           <div>
             <h2 id="waiting-heading">Waiting for reimbursement</h2>
-            <p>Submitted and awaiting a response</p>
           </div>
           <span className="count-badge waiting-count">{waiting.length}</span>
         </div>
@@ -266,11 +272,15 @@ export default function ClaimsApp() {
         ) : <p className="empty-state">No claims waiting for reimbursement.</p>}
       </section>
 
+      <details className="closed-section">
+        <summary>Closed claims <span className="closed-count">{closedClaims.length}</span></summary>
+        {loading ? <p className="empty-state">Loading claims…</p> : closedClaims.length ? (
+          <div className="claim-list">{closedClaims.map((claim) => <ClaimCard key={claim.name} claim={claim} />)}</div>
+        ) : <p className="empty-state">No closed claims yet.</p>}
+      </details>
+
       <footer className="page-footer">
-        <span>{activeClaims.length} active {activeClaims.length === 1 ? "claim" : "claims"}</span>
         <button className="text-button" onClick={() => void refresh()}>Refresh</button>
-        <span className="footer-separator">·</span>
-        <span>Closed claims are hidden</span>
       </footer>
     </main>
   );
