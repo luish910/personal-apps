@@ -79,12 +79,29 @@ function render() {
 }
 
 document.querySelectorAll('.step').forEach(b=>b.addEventListener('click',()=>{step=Number(b.dataset.step);localStorage.setItem(STEP_KEY,String(step));render();}));
-grid.addEventListener('click',event=>{
-  const button=event.target.closest('button[data-food]');if(!button)return;
+grid.addEventListener('click', event => {
+  const button = event.target.closest('button[data-food]');
+  if (!button) return;
+
   ensureToday();
-  const id=button.dataset.food, direction=Number(button.dataset.delta);
-  log.values[id]=Math.max(0,Math.round((log.values[id]+direction*step)*4)/4);
-  saveDay();render();
+
+  const id = button.dataset.food;
+  const direction = Number(button.dataset.delta);
+
+  log.values[id] = Math.max(
+    0,
+    Math.round((log.values[id] + direction * step) * 4) / 4
+  );
+
+  saveDay();
+
+  // Reset the portion selector to 1 after each entry.
+  if (step !== 1) {
+    step = 1;
+    localStorage.setItem(STEP_KEY, '1');
+  }
+
+  render();
 });
 document.querySelector('#toggleGoals').addEventListener('click',()=>{
   const hidden=goalsPanel.classList.toggle('hidden');
