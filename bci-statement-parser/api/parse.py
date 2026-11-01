@@ -78,8 +78,6 @@ def parse_pdf(pdf_bytes, password=None):
                         match = NAT.search(line)
                         if match:
                             row = match.groupdict()
-                            if row["desc"].strip().upper() == "MONTO CANCELADO":
-                                continue
                             row["amt"] = parse_number(row["amt"])
                             row["monthly"] = parse_number(row["monthly"])
                             row["total"] = parse_number(row["total"])
