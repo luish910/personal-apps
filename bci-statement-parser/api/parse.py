@@ -6,7 +6,6 @@ import hmac
 from http.server import BaseHTTPRequestHandler
 
 import pdfplumber
-from api.parse_lider import parse as parse_lider_pdf, validate as validate_lider
 
 MAX_PDF_BYTES = 4_500_000
 
