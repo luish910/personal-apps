@@ -20,13 +20,12 @@ INT = re.compile(
 )
 
 TOTAL_PATTERNS = [
-    ("A", r"MONTO FACTURADO A PAGAR \(PERÍODO ANTERIOR\) \(A\) \$([\d.]+)"),
-    ("B", r"1\.TOTAL OPERACIONES \(B\) \$([\d.]+)"),
-    ("C", r"\(C\) \$([\d.]+)"),
-    ("D", r"\(D\) \$([\d.]+)"),
-    ("billed", r"MONTO TOTAL FACTURADO A PAGAR \(A \+ B \+ C \+D\) \$([\d.]+)"),
-    ("tarjeta", r"TOTAL TARJETA XXXX XXXX XXXX 94 \$([\d.]+)"),
-    ("cuotas", r"TOTAL COMPRAS EN CUOTAS A LA CUENTA \$([\d.]+)"),
+    ("B", r"1\\.TOTAL OPERACIONES \\(B\\) \\$([\\d.]+)"),
+    ("C", r"\\(C\\) \\$([\\d.]+)"),
+    ("D", r"\\(D\\) \\$([\\d.]+)"),
+    ("billed", r"MONTO TOTAL FACTURADO A PAGAR \\(A \\+ B \\+ C \\+D\\) \\$([\\d.]+)"),
+    ("tarjeta", r"TOTAL TARJETA XXXX XXXX XXXX 94 \\$([\\d.]+)"),
+    ("cuotas", r"TOTAL COMPRAS EN CUOTAS A LA CUENTA \\$([\\d.]+)"),
 ]
 
 
@@ -37,23 +36,56 @@ def parse_number(value):
 def parse_pdf(pdf_bytes, password=None):
     result = {"national": [], "international": [], "totals": {}}
     mode = None
+    national_transactions_started = False
+    international_transactions_started = False
 
     with pdfplumber.open(io.BytesIO(pdf_bytes), password=password or None) as pdf:
         for page in pdf.pages:
             for line in (page.extract_text() or "").splitlines():
-                if "ESTADO DE CUENTA NACIONAL" in line:
+                normalized = line.upper()
+
+                if "ESTADO DE CUENTA NACIONAL" in normalized:
                     mode = "national"
-                elif "ESTADO DE CUENTA INTERNACIONAL" in line:
+                    national_transactions_started = False
+                    international_transactions_started = False
+                    continue
+
+                if "ESTADO DE CUENTA INTERNACIONAL" in normalized:
                     mode = "international"
-                elif mode == "national":
-                    match = NAT.search(line)
-                    if match:
-                        row = match.groupdict()
-                        row["amt"] = parse_number(row["amt"])
-                        row["monthly"] = parse_number(row["monthly"])
-                        row["total"] = parse_number(row["total"])
-                        result["national"].append(row)
-                elif mode == "international":
+                    national_transactions_started = False
+                    international_transactions_started = False
+                    continue
+
+                if mode == "national" and "2. PERÍODO ACTUAL" in normalized:
+                    national_transactions_started = True
+                    continue
+
+                if mode == "international" and (
+                    "2. INFORMACIÓN DE TRANSACCIONES" in normalized
+                    or "2. INFORMACION DE TRANSACCIONES" in normalized
+                ):
+                    international_transactions_started = True
+                    continue
+
+                if mode == "national":
+                    # Totals are statement summary fields; prior-period total A is intentionally omitted.
+                    for key, pattern in TOTAL_PATTERNS:
+                        match = re.search(pattern, line)
+                        if match:
+                            result["totals"][key] = parse_number(match.group(1))
+
+                    if national_transactions_started:
+                        match = NAT.search(line)
+                        if match:
+                            row = match.groupdict()
+                            if row["desc"].strip().upper() == "MONTO CANCELADO":
+                                continue
+                            row["amt"] = parse_number(row["amt"])
+                            row["monthly"] = parse_number(row["monthly"])
+                            row["total"] = parse_number(row["total"])
+                            result["national"].append(row)
+
+                elif mode == "international" and international_transactions_started:
                     match = INT.search(line)
                     if match:
                         row = match.groupdict()
@@ -61,13 +93,7 @@ def parse_pdf(pdf_bytes, password=None):
                         row["usd"] = parse_number(row["usd"])
                         result["international"].append(row)
 
-                if mode == "national":
-                    for key, pattern in TOTAL_PATTERNS:
-                        match = re.search(pattern, line)
-                        if match:
-                            result["totals"][key] = parse_number(match.group(1))
-
-                match = re.search(r"DEUDA TOTAL US\$ ([\d.,]+)", line)
+                match = re.search(r"DEUDA TOTAL US\\$ ([\\d.,]+)", line)
                 if match:
                     result["totals"]["usd_total"] = parse_number(match.group(1))
 
