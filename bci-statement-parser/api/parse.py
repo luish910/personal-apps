@@ -90,10 +90,9 @@ class handler(BaseHTTPRequestHandler):
         self.wfile.write(body)
 
     def do_GET(self):
-        is_lider = self.path.split("?", 1)[0].rstrip("/").endswith(("/lider", "/parse_lider"))
         self.send_json(200, {
             "ok": True,
-            "service": "lider-statement-parser" if is_lider else "bci-statement-parser",
+            "service": "bci-statement-parser",
             "usage": "POST the original PDF as application/pdf to this endpoint."
         })
 
@@ -132,26 +131,16 @@ class handler(BaseHTTPRequestHandler):
             self.send_json(400, {"ok": False, "error": "Request body does not look like a PDF."})
             return
 
-        is_lider = self.path.split("?", 1)[0].rstrip("/").endswith(("/lider", "/parse_lider"))
         try:
-            if is_lider:
-                data = parse_lider_pdf(pdf_bytes, self.headers.get("X-PDF-Password"))
-                self.send_json(200, {
-                    "ok": True,
-                    "counts": {"rows": len(data["rows"])},
-                    "data": data,
-                    "validation": validate_lider(data),
-                })
-            else:
-                data = parse_pdf(pdf_bytes, self.headers.get("X-PDF-Password"))
-                self.send_json(200, {
-                    "ok": True,
-                    "counts": {
-                        "national": len(data["national"]),
-                        "international": len(data["international"]),
-                    },
-                    "data": data,
-                })
+            data = parse_pdf(pdf_bytes, self.headers.get("X-PDF-Password"))
+            self.send_json(200, {
+                "ok": True,
+                "counts": {
+                    "national": len(data["national"]),
+                    "international": len(data["international"]),
+                },
+                "data": data,
+            })
         except Exception:
             # Keep internal exception details out of the public response.
             message = (
