@@ -6,6 +6,7 @@ import hmac
 from http.server import BaseHTTPRequestHandler
 
 import pdfplumber
+from api.parse_lider import parse as parse_lider_pdf, validate as validate_lider
 
 MAX_PDF_BYTES = 4_500_000
 
@@ -90,9 +91,10 @@ class handler(BaseHTTPRequestHandler):
         self.wfile.write(body)
 
     def do_GET(self):
+        is_lider = self.path.split("?", 1)[0].rstrip("/").endswith(("/lider", "/parse_lider"))
         self.send_json(200, {
             "ok": True,
-            "service": "bci-statement-parser",
+            "service": "lider-statement-parser" if is_lider else "bci-statement-parser",
             "usage": "POST the original PDF as application/pdf to this endpoint."
         })
 
@@ -131,21 +133,35 @@ class handler(BaseHTTPRequestHandler):
             self.send_json(400, {"ok": False, "error": "Request body does not look like a PDF."})
             return
 
+        is_lider = self.path.split("?", 1)[0].rstrip("/").endswith(("/lider", "/parse_lider"))
         try:
-            data = parse_pdf(pdf_bytes, self.headers.get("X-PDF-Password"))
-        except Exception as exc:
+            if is_lider:
+                data = parse_lider_pdf(pdf_bytes, self.headers.get("X-PDF-Password"))
+                self.send_json(200, {
+                    "ok": True,
+                    "counts": {"rows": len(data["rows"])},
+                    "data": data,
+                    "validation": validate_lider(data),
+                })
+            else:
+                data = parse_pdf(pdf_bytes, self.headers.get("X-PDF-Password"))
+                self.send_json(200, {
+                    "ok": True,
+                    "counts": {
+                        "national": len(data["national"]),
+                        "international": len(data["international"]),
+                    },
+                    "data": data,
+                })
+        except Exception:
             # Keep internal exception details out of the public response.
-            self.send_json(422, {"ok": False, "error": "Could not parse this PDF. Check that it is a readable BCI statement and that any password is correct."})
+            message = (
+                "Could not parse this PDF. Check that it is a readable Lider statement and that any password is correct."
+                if is_lider else
+                "Could not parse this PDF. Check that it is a readable BCI statement and that any password is correct."
+            )
+            self.send_json(422, {"ok": False, "error": message})
             return
-
-        self.send_json(200, {
-            "ok": True,
-            "counts": {
-                "national": len(data["national"]),
-                "international": len(data["international"]),
-            },
-            "data": data,
-        })
 
     def log_message(self, format, *args):
         # Avoid logging request headers or other potentially sensitive details.
