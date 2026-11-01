@@ -143,11 +143,7 @@ class handler(BaseHTTPRequestHandler):
             })
         except Exception:
             # Keep internal exception details out of the public response.
-            message = (
-                "Could not parse this PDF. Check that it is a readable Lider statement and that any password is correct."
-                if is_lider else
-                "Could not parse this PDF. Check that it is a readable BCI statement and that any password is correct."
-            )
+            message = "Could not parse this PDF. Check that it is a readable BCI statement and that any password is correct."
             self.send_json(422, {"ok": False, "error": message})
             return
 
