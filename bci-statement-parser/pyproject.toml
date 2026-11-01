@@ -1,2 +1,10 @@
+[project]
+name = "bci-parser"
+version = "0.1.0"
+requires-python = ">=3.12"
+dependencies = [
+    "pdfplumber==0.11.7"
+]
+
 [tool.vercel]
 entrypoint = "api.parse:handler"
